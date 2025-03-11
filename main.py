@@ -8,8 +8,8 @@ from aiogram.types import (CallbackQuery, InlineKeyboardButton,
 from config import Config, load_config
 
 config: Config = load_config()
-BOT_TOKEN: str = config.tg_bot.token
-
+# BOT_TOKEN: str = config.tg_bot.token
+BOT_TOKEN = '7961876042:AAH7CsB5ZVJIxJVZ_3OrqWOHL62NhOAySVY'
 # Создаем объекты бота и диспетчера
 bot = Bot(BOT_TOKEN)
 dp = Dispatcher()
