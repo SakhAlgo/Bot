@@ -8,17 +8,17 @@ from aiogram.types import (CallbackQuery, InlineKeyboardButton,
 from config import Config, load_config
 
 from aiogram.fsm.storage.redis import RedisStorage
-from redis.asyncio import Redis
+import aioredis
 
 config: Config = load_config()
 BOT_TOKEN: str = config.tg_bot.token
-# BOT_TOKEN = '7961876042:AAH7CsB5ZVJIxJVZ_3OrqWOHL62NhOAySVY'
+
 # Создаем объекты бота и диспетчера
 bot = Bot(BOT_TOKEN)
 dp = Dispatcher()
 
-redis = Redis(host='localhost')
-storage = RedisStorage(redis=redis)
+redis = await aioredis.from_url("redis://localhost:6379", db=5)
+storage: RedisStorage = RedisStorage(redis=redis)
 # Создаем "базу данных" пользователей
 user_dict: dict[int, dict[str, str | int | bool]] = {}
 
