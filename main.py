@@ -7,6 +7,9 @@ from aiogram.types import (CallbackQuery, InlineKeyboardButton,
                            InlineKeyboardMarkup, Message, PhotoSize)
 from config import Config, load_config
 
+from aiogram.fsm.storage.redis import RedisStorage
+from redis.asyncio import Redis
+
 config: Config = load_config()
 BOT_TOKEN: str = config.tg_bot.token
 # BOT_TOKEN = '7961876042:AAH7CsB5ZVJIxJVZ_3OrqWOHL62NhOAySVY'
@@ -14,6 +17,8 @@ BOT_TOKEN: str = config.tg_bot.token
 bot = Bot(BOT_TOKEN)
 dp = Dispatcher()
 
+redis = Redis(host='localhost')
+storage = RedisStorage(redis=redis)
 # Создаем "базу данных" пользователей
 user_dict: dict[int, dict[str, str | int | bool]] = {}
 
@@ -340,4 +345,5 @@ async def send_echo(message: Message):
 
 
 # Запускаем поллинг
-dp.run_polling(bot)
+if __name__ == '__main__':
+    dp.run_polling(bot)
