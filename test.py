@@ -8,10 +8,10 @@ from aiogram.types import (
     InlineKeyboardMarkup, Message, PhotoSize
 )
 from redis.asyncio import Redis
-from config import Config, load_config
 
-config: Config = load_config()
-BOT_TOKEN: str = config.tg_bot.token
+# Вместо BOT TOKEN HERE нужно вставить токен вашего бота,
+# полученный у @BotFather
+BOT_TOKEN = 'BOT TOKEN HERE'
 
 # Инициализируем Redis
 redis = Redis(host='localhost')

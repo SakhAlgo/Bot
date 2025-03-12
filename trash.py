@@ -1,28 +1,24 @@
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command, CommandStart, StateFilter
+from aiogram.filters.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import default_state, State, StatesGroup
-from aiogram.fsm.storage.redis import RedisStorage, Redis
-from aiogram.types import (
-    CallbackQuery, InlineKeyboardButton,
-    InlineKeyboardMarkup, Message, PhotoSize
-)
-from redis.asyncio import Redis
+from aiogram.fsm.state import default_state
+from aiogram.types import (CallbackQuery, InlineKeyboardButton,
+                           InlineKeyboardMarkup, Message, PhotoSize)
 from config import Config, load_config
+
+from aiogram.fsm.storage.redis import RedisStorage
+import aioredis
 
 config: Config = load_config()
 BOT_TOKEN: str = config.tg_bot.token
 
-# Инициализируем Redis
-redis = Redis(host='localhost')
-
-# Инициализируем хранилище (создаем экземпляр класса MemoryStorage)
-storage = RedisStorage(redis=redis)
-
 # Создаем объекты бота и диспетчера
 bot = Bot(BOT_TOKEN)
-dp = Dispatcher(storage=storage)
+dp = Dispatcher()
 
+redis = await aioredis.from_url("redis://localhost:6379", db=5)
+storage: RedisStorage = RedisStorage(redis=redis)
 # Создаем "базу данных" пользователей
 user_dict: dict[int, dict[str, str | int | bool]] = {}
 
@@ -103,7 +99,8 @@ async def warning_not_name(message: Message):
         text='То, что вы отправили не похоже на имя\n\n'
              'Пожалуйста, введите ваше имя\n\n'
              'Если вы хотите прервать заполнение анкеты - '
-             'отправьте команду /cancel')
+             'отправьте команду /cancel'
+    )
 
 
 # Этот хэндлер будет срабатывать, если введен корректный возраст
@@ -165,7 +162,8 @@ async def process_gender_press(callback: CallbackQuery, state: FSMContext):
     # чтобы у пользователя не было желания тыкать кнопки
     await callback.message.delete()
     await callback.message.answer(
-        text='Спасибо! А теперь загрузите, пожалуйста, ваше фото'
+        text='Спасибо! А теперь загрузите, '
+             'пожалуйста, ваше фото'
     )
     # Устанавливаем состояние ожидания загрузки фото
     await state.set_state(FSMFillForm.upload_photo)
@@ -249,7 +247,8 @@ async def process_education_press(callback: CallbackQuery, state: FSMContext):
     )
     no_news_button = InlineKeyboardButton(
         text='Нет, спасибо',
-        callback_data='no_news')
+        callback_data='no_news'
+    )
     # Добавляем кнопки в клавиатуру в один ряд
     keyboard: list[list[InlineKeyboardButton]] = [
         [yes_news_button, no_news_button]
@@ -259,7 +258,8 @@ async def process_education_press(callback: CallbackQuery, state: FSMContext):
     # Редактируем предыдущее сообщение с кнопками, отправляя
     # новый текст и новую клавиатуру
     await callback.message.edit_text(
-        text='Спасибо!\n\nОстался последний шаг.\n'
+        text='Спасибо!\n\n'
+             'Остался последний шаг.\n'
              'Хотели бы вы получать новости?',
         reply_markup=markup
     )
@@ -272,8 +272,9 @@ async def process_education_press(callback: CallbackQuery, state: FSMContext):
 @dp.message(StateFilter(FSMFillForm.fill_education))
 async def warning_not_education(message: Message):
     await message.answer(
-        text='Пожалуйста, пользуйтесь кнопками при выборе образования\n\n'
-             'Если вы хотите прервать заполнение анкеты - отправьте '
+        text='Пожалуйста, пользуйтесь кнопками '
+             'при выборе образования\n\nЕсли вы хотите '
+             'прервать заполнение анкеты - отправьте '
              'команду /cancel'
     )
 
@@ -330,13 +331,14 @@ async def process_showdata_command(message: Message):
     else:
         # Если анкеты пользователя в базе нет - предлагаем заполнить
         await message.answer(
-            text='Вы еще не заполняли анкету. Чтобы приступить - '
-            'отправьте команду /fillform'
+            text='Вы еще не заполняли анкету. '
+                 'Чтобы приступить - отправьте '
+                 'команду /fillform'
         )
 
 
-# Этот хэндлер будет срабатывать на любые сообщения в состоянии "по умолчанию",
-# кроме тех, для которых есть отдельные хэндлеры
+# Этот хэндлер будет срабатывать на любые сообщения, кроме тех
+# для которых есть отдельные хэндлеры, вне состояний
 @dp.message(StateFilter(default_state))
 async def send_echo(message: Message):
     await message.reply(text='Извините, моя твоя не понимать')
